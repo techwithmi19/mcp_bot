@@ -3,41 +3,27 @@ from app.config.settings import MODEL_NAME
 
 
 class LLMService:
+    """
+    Service responsible for communicating with the LLM.
+    """
 
-    def ask(self, message, tools):
+    def ask(
+        self,
+        messages: list,
+        tools: list,
+    ):
 
         return client.chat.completions.create(
             model=MODEL_NAME,
-            messages=[
-                {
-                    "role": "user",
-                    "content": message,
-                }
-            ],
+            messages=messages,
             tools=tools,
         )
 
     def generate_final_answer(
         self,
-        original_message,
-        tool_response,
-        tool_call,
-        first_response,
-        tools,
+        messages: list,
+        tools: list,
     ):
-
-        messages = [
-            {
-                "role": "user",
-                "content": original_message,
-            },
-            first_response.choices[0].message,
-            {
-                "role": "tool",
-                "tool_call_id": tool_call.id,
-                "content": str(tool_response.content),
-            },
-        ]
 
         return client.chat.completions.create(
             model=MODEL_NAME,
