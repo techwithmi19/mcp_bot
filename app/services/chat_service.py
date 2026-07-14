@@ -1,32 +1,45 @@
-from app.services.conversation_service import ConversationService
 from app.services.prompt_service import PromptService
 
 
 class ChatService:
 
-    def __init__(self, llm_service, mcp_service, tool_registry):
+    def __init__(
+        self,
+        llm_service,
+        mcp_service,
+        tool_registry,
+        session_manager,
+    ):
         self.llm_service = llm_service
         self.mcp_service = mcp_service
         self.tool_registry = tool_registry
-
-        self.conversation_service = ConversationService()
+        self.session_manager = session_manager
         self.prompt_service = PromptService()
 
-
-    async def chat(self, message: str) -> str:
+    async def chat(
+        self,
+        session_id: str,
+        message: str,
+    ) -> str:
         """
         Process a user message and return the assistant response.
         """
 
-        # Store user message
-        self.conversation_service.add_user_message(message)
+        # Get the user's session
+        session = self.session_manager.get_session(session_id)
 
-        # Get available tools
+        # Get conversation for this session
+        conversation = session.conversation
+
+        # Store user message
+        conversation.add_user_message(message)
+
+        # Get cached MCP tools
         tools = self.tool_registry.get_tools()
 
-        # Build prompt
+        # Build messages
         messages = self.prompt_service.build_messages(
-            self.conversation_service.get_messages()
+            conversation.get_messages()
         )
 
         # Ask LLM
@@ -37,39 +50,40 @@ class ChatService:
 
         assistant_message = response.choices[0].message
 
-        # No tool required
+        # No tool call required
         if not assistant_message.tool_calls:
 
-            self.conversation_service.add_assistant_message(
+            conversation.add_assistant_message(
                 assistant_message.content
             )
 
             return assistant_message.content
 
-        # Store assistant tool calls
-        self.conversation_service.add_tool_call_message(
+        # Save assistant tool call
+        conversation.add_tool_call_message(
             assistant_message
         )
 
-        # Execute all requested tools
-        for tool_call in assistant_message.tool_calls:
+        # Execute first tool call
+        tool_call = assistant_message.tool_calls[0]
 
-            tool_response = await self.mcp_service.execute_tool(
-                tool_call.function.name,
-                tool_call.function.arguments,
-            )
-
-            self.conversation_service.add_tool_message(
-                tool_call.id,
-                tool_response.content[0].text,
-            )
-
-        # Build updated prompt
-        messages = self.prompt_service.build_messages(
-            self.conversation_service.get_messages()
+        tool_response = await self.mcp_service.execute_tool(
+            tool_call.function.name,
+            tool_call.function.arguments,
         )
 
-        # Generate final answer
+        # Save tool response
+        conversation.add_tool_message(
+            tool_call.id,
+            str(tool_response.content),
+        )
+
+        # Build updated conversation
+        messages = self.prompt_service.build_messages(
+            conversation.get_messages()
+        )
+
+        # Generate final response
         final_response = self.llm_service.generate_final_answer(
             messages,
             tools,
@@ -77,7 +91,8 @@ class ChatService:
 
         final_answer = final_response.choices[0].message.content
 
-        self.conversation_service.add_assistant_message(
+        # Save assistant response
+        conversation.add_assistant_message(
             final_answer
         )
 
