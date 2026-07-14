@@ -1,5 +1,5 @@
 from app.services.conversation_service import ConversationService
-from pprint import pprint
+from app.services.prompt_service import PromptService
 
 
 class ChatService:
@@ -7,7 +7,9 @@ class ChatService:
     def __init__(self, llm_service, mcp_service):
         self.llm_service = llm_service
         self.mcp_service = mcp_service
+
         self.conversation_service = ConversationService()
+        self.prompt_service = PromptService()
 
     async def chat(self, message: str) -> str:
         """
@@ -17,20 +19,21 @@ class ChatService:
         # Store user message
         self.conversation_service.add_user_message(message)
 
-        # Get MCP tools
+        # Get available tools
         tools = await self.mcp_service.list_tools()
+
+        # Build prompt
+        messages = self.prompt_service.build_messages(
+            self.conversation_service.get_messages()
+        )
 
         # Ask LLM
         response = self.llm_service.ask(
-            self.conversation_service.get_messages(),
+            messages,
             tools,
         )
 
         assistant_message = response.choices[0].message
-
-        # print("\n========== Assistant Message ==========")
-        # pprint(assistant_message.model_dump())
-        # print("=======================================\n")
 
         # No tool required
         if not assistant_message.tool_calls:
@@ -41,12 +44,12 @@ class ChatService:
 
             return assistant_message.content
 
-        # Save assistant tool call
+        # Store assistant tool calls
         self.conversation_service.add_tool_call_message(
             assistant_message
         )
 
-        # Execute first tool
+        # Execute all requested tools
         for tool_call in assistant_message.tool_calls:
 
             tool_response = await self.mcp_service.execute_tool(
@@ -59,21 +62,19 @@ class ChatService:
                 tool_response.content[0].text,
             )
 
-        print("\n========== Conversation ==========")
-        pprint(self.conversation_service.get_messages())
-        print("==================================\n")
+        # Build updated prompt
+        messages = self.prompt_service.build_messages(
+            self.conversation_service.get_messages()
+        )
 
-        # Ask LLM again with updated conversation
+        # Generate final answer
         final_response = self.llm_service.generate_final_answer(
-            self.conversation_service.get_messages(),
+            messages,
             tools,
         )
 
-        
-
         final_answer = final_response.choices[0].message.content
 
-        # Save assistant response
         self.conversation_service.add_assistant_message(
             final_answer
         )
