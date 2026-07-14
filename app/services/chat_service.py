@@ -4,12 +4,14 @@ from app.services.prompt_service import PromptService
 
 class ChatService:
 
-    def __init__(self, llm_service, mcp_service):
+    def __init__(self, llm_service, mcp_service, tool_registry):
         self.llm_service = llm_service
         self.mcp_service = mcp_service
+        self.tool_registry = tool_registry
 
         self.conversation_service = ConversationService()
         self.prompt_service = PromptService()
+
 
     async def chat(self, message: str) -> str:
         """
@@ -20,7 +22,7 @@ class ChatService:
         self.conversation_service.add_user_message(message)
 
         # Get available tools
-        tools = await self.mcp_service.list_tools()
+        tools = self.tool_registry.get_tools()
 
         # Build prompt
         messages = self.prompt_service.build_messages(

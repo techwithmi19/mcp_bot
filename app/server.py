@@ -4,6 +4,7 @@ from app.config.settings import MCP_SERVER_URL
 from app.services.chat_service import ChatService
 from app.services.llm_service import LLMService
 from app.services.mcp_service import MCPService
+from app.services.tool_registry import ToolRegistry
 from app.cli import CLI
 
 
@@ -16,15 +17,18 @@ async def start():
     # Create services
     mcp_service = MCPService(MCP_SERVER_URL)
     llm_service = LLMService()
+    tool_registry = ToolRegistry(mcp_service)
 
     # Connect to MCP
     await mcp_service.connect()
+    await tool_registry.initialize()
 
     try:
         # Create Chat Service
         chat_service = ChatService(
             llm_service,
             mcp_service,
+            tool_registry,
         )
 
         # Start CLI
