@@ -1,4 +1,5 @@
 from app.models.chat_session import ChatSession
+from app.core.exceptions import SessionNotFoundError
 
 
 class SessionManager:
@@ -13,14 +14,20 @@ class SessionManager:
         """
         Return an existing session or create a new one.
         """
+        try:
+            
+            if session_id not in self._sessions:
+                self._sessions[session_id] = ChatSession()
 
-        if session_id not in self._sessions:
-            self._sessions[session_id] = ChatSession()
+            session = self._sessions[session_id]
+            session.touch()
 
-        session = self._sessions[session_id]
-        session.touch()
-
-        return session
+            return session
+        
+        except Exception as ex:
+            raise SessionNotFoundError(
+                f"Session '{session_id}' not found."
+            )
 
     def remove_session(self, session_id: str):
         """

@@ -27,10 +27,16 @@ async def start():
             if message.lower() in ["exit", "quit"]:
                 break
 
-            response = await chat_service.chat(
-                session_id="console",
-                message=message,
-            )
+            try:
+                response = await chat_service.chat(
+                    session_id="console",
+                    message=message,
+                )
+            except Exception as ex:
+
+                logger.exception("Chat request failed.")
+
+                print(f"\nError: {ex}\n")                                   
 
             logger.info(f"Assistant: {response}")
 

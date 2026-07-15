@@ -2,6 +2,10 @@ import json
 
 from app.core.mcp.mcp_client import MCPClient
 from app.core.mcp.tool_executor import ToolExecutor
+from app.core.exceptions import (
+    MCPConnectionError,
+    MCPToolExecutionError,
+)
 
 
 class MCPService:
@@ -19,8 +23,18 @@ class MCPService:
         """
         Create MCP session.
         """
-        self.session = await self.client.connect()
-        self.tool_executor = ToolExecutor(self.session)
+
+        try:
+            self.session = await self.client.connect()
+
+            self.tool_executor = ToolExecutor(
+                self.session
+            )
+
+        except Exception as ex:
+            raise MCPConnectionError(
+                "Unable to connect to MCP server."
+            ) from ex
 
     async def disconnect(self):
         """
@@ -59,10 +73,16 @@ class MCPService:
         """
         Execute a tool on MCP server.
         """
+        try:
+            parsed_arguments = json.loads(arguments)
 
-        parsed_arguments = json.loads(arguments)
+            return await self.tool_executor.execute_tool(
+                tool_name,
+                parsed_arguments,
+            )
+        
+        except Exception as ex:
 
-        return await self.tool_executor.execute_tool(
-            tool_name,
-            parsed_arguments,
-        )
+            raise MCPToolExecutionError(
+                f"Failed to execute tool '{tool_name}'."
+            ) from ex

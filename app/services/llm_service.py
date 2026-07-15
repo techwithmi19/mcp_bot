@@ -1,5 +1,6 @@
 from app.core.llm.openai_client import client
 from app.config.settings import MODEL_NAME
+from app.core.exceptions import LLMError
 
 
 class LLMService:
@@ -12,21 +13,34 @@ class LLMService:
         messages: list,
         tools: list,
     ):
+        try:
 
-        return client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=messages,
-            tools=tools,
-        )
+            return client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=messages,
+                tools=tools,
+            )
+        except Exception as ex:
+
+            raise LLMError(
+                "Failed to communicate with OpenAI."
+            ) from ex
+        
 
     def generate_final_answer(
         self,
         messages: list,
         tools: list,
     ):
+        try:
+            
+            return client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=messages,
+                tools=tools,
+            )
+        except Exception as ex:
 
-        return client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=messages,
-            tools=tools,
-        )
+            raise LLMError(
+                "Failed to generate final response."
+            ) from ex
