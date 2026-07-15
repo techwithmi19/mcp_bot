@@ -76,11 +76,11 @@ class Container:
 
             logger.info("Application initialized successfully.")
 
-        except Exception as ex:
+        except Exception:
             logger.error(
                 "Failed to initialize application services."
             )
-            raise ex
+            raise
 
     async def shutdown(self):
         """
@@ -101,3 +101,6 @@ class Container:
             raise
 
         logger.info("Application shutdown completed.")
+
+# Global application container
+container = Container()        
