@@ -7,6 +7,8 @@ from app.services.mcp_service import MCPService
 from app.services.session_manager import SessionManager
 from app.services.tool_registry import ToolRegistry
 
+from app.services.configuration_service import ConfigurationService
+
 
 class Container:
     """
@@ -46,6 +48,8 @@ class Container:
         """
         try:
             logger.info(f"Connecting to MCP Server: {MCP_SERVER_URL}")
+
+            ConfigurationService.validate()
 
             self._mcp_service = MCPService(MCP_SERVER_URL)
             await self._mcp_service.connect()
