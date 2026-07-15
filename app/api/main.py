@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from app.bootstrap.container import container
 from app.core.logger import logger
 from app.api.routes.health import router as health_router
+from app.api.routes.chat import router as chat_router
 
 
 @asynccontextmanager
@@ -32,3 +33,4 @@ app = FastAPI(
 )
 
 app.include_router(health_router)
+app.include_router(chat_router)
