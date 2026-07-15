@@ -1,12 +1,13 @@
 from mcp.client.streamable_http import streamablehttp_client
 from mcp import ClientSession
 
+from app.core.logger import logger
+
 
 class MCPClient:
 
     def __init__(self, server_url):
         self.server_url = server_url
-        print(f"Connecting to: {self.server_url}")
 
     async def connect(self):
 

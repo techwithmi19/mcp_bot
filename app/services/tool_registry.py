@@ -1,3 +1,6 @@
+from app.core.logger import logger
+
+
 class ToolRegistry:
     """
     Maintains a cached list of MCP tools.
@@ -16,8 +19,8 @@ class ToolRegistry:
         """
 
         self._tools = await self.mcp_service.list_tools()
-        print(f"Loaded {len(self._tools)} MCP tools.")
-        
+        logger.info(f"Loaded {len(self._tools)} MCP tools.")
+
 
     def get_tools(self):
         """

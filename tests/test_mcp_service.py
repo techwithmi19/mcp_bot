@@ -1,6 +1,7 @@
 import asyncio
 
 from app.services.mcp_service import MCPService
+from app.core.logger import logger
 
 
 SERVER_URL = "http://172.20.26.168:8000/mcp"
@@ -14,7 +15,7 @@ async def main():
 
     tools = await mcp.list_tools()
 
-    print(tools)
+    logger.info("Available MCP tools:")
 
     await mcp.disconnect()
 

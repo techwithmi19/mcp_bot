@@ -1,3 +1,5 @@
+from app.core.logger import logger
+
 class CLI:
 
     def __init__(self, chat_service):
@@ -5,17 +7,17 @@ class CLI:
 
     async def start(self):
 
-        print("=" * 60)
-        print("        GitLab AI Assistant")
-        print("=" * 60)
-        print("Type 'exit' to quit.\n")
+        logger.info("=" * 60)
+        logger.info("        GitLab AI Assistant")
+        logger.info("=" * 60)
+        logger.info("Type 'exit' to quit.\n")
 
         while True:
 
             message = input("You: ").strip()
 
             if message.lower() in ("exit", "quit"):
-                print("\nGoodbye!")
+                logger.info("\nGoodbye!")
                 break
 
             if not message:
@@ -24,9 +26,9 @@ class CLI:
             try:
                 answer = await self.chat_service.chat(message)
 
-                print("\nAssistant:")
-                print(answer)
-                print()
+                logger.info("\nAssistant:")
+                logger.info(answer)
+                logger.info()
 
             except Exception as ex:
-                print(f"\nError: {ex}\n")
+                logger.info(f"\nError: {ex}\n")
